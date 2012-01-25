@@ -18,23 +18,24 @@ define([
     // Delegated events for creating new items, and clearing completed ones.
     events: {
       "keypress #new-todo":  "createOnEnter",
-      "keyup #new-todo":     "showTooltip",
-      "click .todo-clear a": "clearCompleted",
-      "click .mark-all-done": "toggleAllComplete"
+      "click #clear-completed": "clearCompleted",
+      "click #toggle-all": "toggleAllComplete"
     },
 
     // At initialization we bind to the relevant events on the `Todos`
     // collection, when items are added or changed. Kick things off by
     // loading any preexisting todos that might be saved in *localStorage*.
     initialize: function() {
-      _.bindAll(this, 'addOne', 'addAll', 'render', 'toggleAllComplete');
 
       this.input    = this.$("#new-todo");
-      this.allCheckbox = this.$(".mark-all-done")[0];
+      this.allCheckbox = this.$("#toggle-all")[0];
 
-      Todos.bind('add',     this.addOne);
-      Todos.bind('reset',   this.addAll);
-      Todos.bind('all',     this.render);
+      Todos.bind('add',     this.addOne, this);
+      Todos.bind('reset',   this.addAll, this);
+      Todos.bind('all',     this.render, this);
+
+      this.$footer = this.$('footer');
+      this.$main = $('#main');
 
       Todos.fetch();
     },
@@ -45,11 +46,19 @@ define([
       var done = Todos.done().length;
       var remaining = Todos.remaining().length;
 
-      this.$('#todo-stats').html(this.statsTemplate({
-        total:      Todos.length,
-        done:       done,
-        remaining:  remaining
-      }));
+      if (Todos.length) {
+          this.$main.show();
+          this.$footer.show();
+
+          this.$footer.html(this.statsTemplate({
+            done:       done,
+            remaining:  remaining
+          }));
+          
+      } else {
+          this.$main.hide();
+          this.$footer.hide();
+      }
 
       this.allCheckbox.checked = !remaining;
     },
@@ -87,18 +96,6 @@ define([
     clearCompleted: function() {
       _.each(Todos.done(), function(todo){ todo.clear(); });
       return false;
-    },
-
-    // Lazily show the tooltip that tells you to press `enter` to save
-    // a new todo item, after one second.
-    showTooltip: function(e) {
-      var tooltip = this.$(".ui-tooltip-top");
-      var val = this.input.val();
-      tooltip.fadeOut();
-      if (this.tooltipTimeout) clearTimeout(this.tooltipTimeout);
-      if (val == '' || val == this.input.attr('placeholder')) return;
-      var show = function(){ tooltip.show().fadeIn(); };
-      this.tooltipTimeout = _.delay(show, 1000);
     },
 
     // Change each todo so that it's `done` state matches the check all

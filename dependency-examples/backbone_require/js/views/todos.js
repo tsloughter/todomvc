@@ -14,26 +14,28 @@ define([
 
     // The DOM events specific to an item.
     events: {
-      "click .check"              : "toggleDone",
-      "dblclick div.todo-content" : "edit",
-      "click span.todo-destroy"   : "clear",
-      "keypress .todo-input"      : "updateOnEnter",
-      "blur .todo-input"          : "close"
+      "click .toggle"             : "toggleDone",
+      "dblclick label"            : "edit",
+      "click a.destroy"           : "clear",
+      "keypress .edit"            : "updateOnEnter",
+      "blur .edit"                : "close"
     },
 
     // The TodoView listens for changes to its model, re-rendering. Since there's
     // a one-to-one correspondence between a **Todo** and a **TodoView** in this
     // app, we set a direct reference on the model for convenience.
     initialize: function() {
-      _.bindAll(this, 'render', 'close', 'remove');
-      this.model.bind('change', this.render);
-      this.model.bind('destroy', this.remove);
+      this.model.bind('change', this.render, this);
+      this.model.bind('destroy', this.remove, this);
     },
 
     // Re-render the contents of the todo item.
     render: function() {
-      $(this.el).html(this.template(this.model.toJSON()));
-      this.input = this.$('.todo-input');
+      var $el = $(this.el);
+      $el.html(this.template(this.model.toJSON()));
+      $el.toggleClass('done', this.model.get('done'));
+
+      this.input = this.$('.edit');
       return this;
     },
 
